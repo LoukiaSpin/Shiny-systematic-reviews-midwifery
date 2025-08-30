@@ -7,6 +7,7 @@ library(DT)
 library(ggplot2)
 library(ggiraph)
 library(readxl)
+library(writexl)
 library(reshape2)
 library(leaflet)
 library(dplyr)
@@ -18,6 +19,7 @@ library(fresh)
 library(tidytext)
 library(forcats)
 library(markdown)
+library(ggimage)
 
 
 ## Load data from local file
@@ -25,7 +27,13 @@ library(markdown)
 data_sr <- read_excel("data/systematic reviews & included trials.xlsx", sheet = "systematic reviews")[, -1] 
 
 # Load searched databases
-databases <- read_excel("data/systematic reviews & included trials.xlsx", sheet = 2)
+databases <- read_excel("data/systematic reviews & included trials.xlsx", sheet = 2, na = "NA")
+
+# Load participants characteristics (inclusion & exclusion criteria)
+data_partic <- read_excel("data/systematic reviews & included trials.xlsx", sheet = 3, na = "NA")
+
+# Load compared intervention characteristics 
+data_interv <- read_excel("data/systematic reviews & included trials.xlsx", sheet = 4, na = "NA")
 
 
 ## Customising the style of the app (Hebammen Logo: Light blue is #89ccc4, Teal Green is #00847e, #00817b, #00807a, #007f79, #00837d, #00827c, Orange is #f08300, #ef7e00)
@@ -43,6 +51,11 @@ ui <- dashboardPage(
       menuItem("About", tabName = "about", icon = icon("info-circle")),  # A few words about the app
       menuItem("Quality summary", tabName = "amstar_tab", icon = icon("dashboard")),
       menuItem("Map", tabName = "map_tab", icon = icon("globe")),
+      menuItem("PICO features", tabName = "pico_tab", icon = icon("magnifying-glass-chart"),
+               menuSubItem("Features summary", tabName = "pico_summary"),
+               menuSubItem("Participant characteristics", tabName = "participant"),
+               menuSubItem("Intervention characteristics", tabName = "interventions"),
+               menuSubItem("Outcomes investigated", tabName = "outcomes")),
       menuItem("Systematic review collection", tabName = "review_tab", icon = icon("th")),
       sliderTextInput(
         inputId = "year_range",
@@ -129,8 +142,30 @@ ui <- dashboardPage(
               leafletOutput("map", height = "1200px")
               ),
       # Fourth tab content
+      tabItem(tabName = "pico_summary",  # EDW!!
+              h3("PICO features summary"),
+              fluidRow(
+                box(title = "Inclusion & exclusion criteria", status = "primary", solidHeader = TRUE, girafeOutput("plotparticipant", width = "100%", height = "400px"))#,
+                #box(title = "Reporting & methodology transparency", status = "primary", solidHeader = TRUE, girafeOutput("plotvarious", width = "100%", height = "350px")),
+              )
+      ),
+      tabItem(tabName = "participant",   # EDW!!
+              h3("Inclusion & exclusion criteria: were they reported?"),
+              girafeOutput("participantbubble")
+      ),
+      tabItem(tabName = "interventions",   # EDW!!
+              h3("Characteristics of compared interventions: were they reported?"),
+              girafeOutput("interventionbubble")
+      ),
+      tabItem(tabName = "outcomes",   # EDW!!
+              h3("Maternal & neonatal outcomes")#,
+              #plotOutput("widePlot", height = "400px", width = "1200px")
+      ),
+      # Fifth tab content
       tabItem(tabName = "review_tab",
               h2("Systematic reviews on labour duration"),
+              downloadButton("downloadData", "Download Excel"),
+              br(), br(),
               DTOutput("rawDataTable")
               )
       )
@@ -147,11 +182,11 @@ server <- function(input, output, session) {
   #*****************************************************************************
 
   ## Filter data by publication year the 'data_sr' dataset
-  filtered_data <- reactive({
+  filtered_sr_count <- reactive({
     data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], ]
   })
   
-  ## amstar_tab (amstar_tab 1): AMSTAR overall confidence
+  ## amstar_tab (amstar_tab 1): AMSTAR overall confidence ----
   amstar_tab <- reactive({
     # First, filter data by year range
     filtered_data <- data_sr[data_sr$Year >= input$year_range[1] &
@@ -170,7 +205,7 @@ server <- function(input, output, session) {
                perc = as.vector(prop))
   })
   
-  ## amstardomains_tab (amstar_tab 2): Frequency of each AMSTAR items' level (yes, partly yes, no)
+  ## amstardomains_tab (amstar_tab 2): Frequency of each AMSTAR items' level (yes, partly yes, no) ----
   amstardomains_tab <- reactive({
     # Filter by selected year range
     data_various <- melt(data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], c(1, seq(17, 47, 2))], id.vars = c("Authors"))[, -1] %>%
@@ -189,7 +224,7 @@ server <- function(input, output, session) {
                                        "13. Risk of bias impact on conclusions", "14. Heterogeneity satisfactorily discussed", "15. Publication bias adequately investigated", "16. Conflict of interest disclosed"); data_various
   })
     
-  ## various_tab (amstar_tab 3): Reporting and methodology transparency
+  ## various_tab (amstar_tab 3): Reporting and methodology transparency ----
   various_tab <- reactive({
     # Filter by selected year range
     data_various <- melt(data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], c(1, 7:10)], id.vars = c("Authors"))
@@ -207,7 +242,7 @@ server <- function(input, output, session) {
     tab$perc <- tab$value / nrow(data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], ]); tab
   })
   
-  ## databases_data (amstar_tab 4): Databases for literature searches
+  ## databases_data (amstar_tab 4): Databases for literature searches ----
   databases_data <- reactive({
     # Keep the necessary columns and filter by year range
     databases_short <- databases[databases$Year >= input$year_range[1] & databases$Year <= input$year_range[2], -3]
@@ -252,15 +287,10 @@ server <- function(input, output, session) {
     databases_long_new <- rbind(databases_long_new, to_add)
     databases_long_new <- databases_long_new %>% arrange(grey)
     databases_long_new$id <- seq(1, nrow(databases_long_new))
-    
-    # Get the name and the y position of each label
-    databases_long_new$angle <- 90 - 360 * (databases_long_new$id - 0.5) / nrow(databases_long_new)     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
-    databases_long_new$hjust <- ifelse(databases_long_new$angle < -90, 1, 0)
-    databases_long_new$angle <- ifelse(databases_long_new$angle < -90, databases_long_new$angle + 180, databases_long_new$angle)
     databases_long_new
   })
   
-  ## location_data (map_tab): Geographic location of authors
+  ## location_data (map_tab): Geographic location of authors ----
   location_data <- reactive({
     # Considering the year
     geo_location <- subset(data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], ], select = c("Iran", "Egypt", "Italy", "USA", "Taiwan", "South Africa"))
@@ -273,7 +303,98 @@ server <- function(input, output, session) {
     tab <- data.frame(country = names(geo_location_sum), melt(geo_location_sum)); tab
   })
   
-  ## rawdata (review_tab): Dataset in Table (Systematic review collection)
+  ## participant_data (pico_summary 1 & participants): PICO features summary & participants ----
+  participant_summary <- reactive({
+    # Filtering by year
+    partic_filtered <- data_partic[data_partic$Year >= input$year_range[1] & data_partic$Year <= input$year_range[2], ]
+    
+    # First author with publication year
+    partic_filtered$`First author` <- paste(partic_filtered$`First author`, partic_filtered$Year)
+    
+    # Calculate the absolute frequency of each characteristic
+    partic_frequency <- colSums(!is.na(partic_filtered[, -c(1, 2)]))
+    
+    # Data-frame
+    partic_long <- data.frame(review = unname(unlist(rep(partic_filtered[, 1], length(colnames(partic_filtered)[-c(1, 2)])))),
+                              variable = rep(colnames(partic_filtered)[-c(1, 2)], each = dim(partic_filtered)[1]),
+                              values = unname(unlist(c(partic_filtered[, -c(1, 2)]))),
+                              freq = rep(partic_frequency, each = dim(partic_filtered)[1]),
+                              perc = rep(partic_frequency, each = dim(partic_filtered)[1]) / dim(partic_filtered)[1])
+    
+    # Include an indicator on whether a characteristic is an inclusion criterion
+    partic_long$inclusion <- 
+      ifelse(!is.element(partic_long$variable, c("(Pre)eclampsia", "Placenta abruption", "Placenta previa", "Other placental conditions", 
+                                                 "Previous uterine surgery", "Vaginal delivery contraindications", "Previous caesarian delivery", 
+                                                 "Pregnancy-induced illness", "Chronic illness")), "Inclusion criteria", "Exclusion criteria")
+    
+    # Shorten the name of some variables
+    partic_long_new <- partic_long %>%
+      mutate(variable  = recode(variable , 
+                                "Singleton pregnancy" = "Singleton\npregnancy",
+                                "Gestational age" = "Gestational\nage",
+                                "Vertex positioning" = "Vertex\npositioning",
+                                "Membranes intact" = "Membranes\nintact",
+                                "Uterine contractions" = "Uterine\ncontractions",
+                                "Cervical dilatation" = "Cervical\ndilatation",
+                                "Labour management" = "Labour\nmanagement",
+                                "Pregnancy risk" = "Pregnancy\nrisk",
+                                "Placenta abruption" ="Placenta\nabruption",
+                                "Previous uterine surgery" = "Previous uterine\nsurgery",
+                                "Vaginal delivery contraindications" = "Vaginal delivery\ncontraindications",
+                                "Previous caesarian delivery" = "Previous caesarian\ndelivery",
+                                "Pregnancy-induced illness" = "Pregnancy-induced\nillness",
+                                "Other placental conditions" = "Other placental\nconditions"))
+    
+    # Include an indicator on whether a characteristic was reported or not
+    partic_long_new$indicator <- ifelse(is.na(partic_long_new$values), "No", "Yes")
+    
+    # Replace NA in 'values' with no (i.e., not reported)
+    partic_long_new$values_new <- ifelse(is.na(partic_long_new$values), "No", partic_long_new$values); partic_long_new
+  })
+  
+  ## intervention_data (pico_summary 2 & interventions): PICO features summary & interventions ----
+  intervention_summary <- reactive({
+    # Filtering by year
+    interv_filtered <- data_interv[data_interv$Year >= input$year_range[1] & data_interv$Year <= input$year_range[2], ]
+    
+    # First author with publication year
+    interv_filtered$`First author` <- paste(interv_filtered$`First author`, interv_filtered$Year)
+    
+    # Calculate the absolute frequency of each characteristic
+    interv_frequency <- colSums(!is.na(interv_filtered[, -c(1, 2)]))
+    
+    # Data-frame
+    interv_long <- data.frame(review = unname(unlist(rep(interv_filtered[, 1], length(colnames(interv_filtered)[-c(1, 2)])))),
+                              variable = rep(colnames(interv_filtered)[-c(1, 2)], each = dim(interv_filtered)[1]),
+                              values = unname(unlist(c(interv_filtered[, -c(1, 2)]))),
+                              freq = rep(interv_frequency, each = dim(interv_filtered)[1]),
+                              perc = rep(interv_frequency, each = dim(interv_filtered)[1]) / dim(interv_filtered)[1])
+    
+    # Include an indicator on whether a characteristic is intervention or comparison
+    interv_long$intervention <- 
+      ifelse(!is.element(interv_long$variable, c("Placebo",	"No treatment", "Other drug",	"Admin_route_comp",	
+                                                 "Dose_comp",	"Dose_frequency_comp")), "Intervention", "Comparator")
+    
+    # Shorten the name of some variables
+    interv_long_new <- interv_long %>%
+      mutate(variable  = recode(variable , 
+                                "Admin_route_int" = "Administration\nroute",
+                                "Dose_int" = "Dose",
+                                "Dose_number_int" = "Number of doses",
+                                "Dose_frequency_int" = "Dose frequency",
+                                "HBB_allergy_int" = "Allergies",
+                                "Admin_route_comp" = "Administration\nroute",
+                                "Dose_comp" = "Dose",
+                                "Dose_frequency_comp" = "Dose frequency"))
+    
+    # Include an indicator on whether a characteristic was reported or not
+    interv_long_new$indicator <- ifelse(is.na(interv_long_new$values), "No", "Yes")
+    
+    # Replace NA in 'values' with no (i.e., not reported)
+    interv_long_new$values_new <- ifelse(is.na(interv_long_new$values), "No", interv_long_new$values); interv_long_new
+  })
+  
+  ## rawdata (review_tab): Dataset in Table (Systematic review collection) ----
   rawdata <- reactive({
     # Filter or subset if needed (example: by year slider)
     data_filtered <- data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], ]
@@ -291,7 +412,7 @@ server <- function(input, output, session) {
   #*
   #*****************************************************************************
 
-  ## amstar_tab (amstar_tab 1): Bar plot with AMSTAR overall confidence
+  ## amstar_tab (amstar_tab 1): Bar plot with AMSTAR overall confidence ----
   output$plotamstar <- renderGirafe({
     # Basic plot
     interactive_amstar <- ggplot(amstar_tab(),
@@ -310,7 +431,7 @@ server <- function(input, output, session) {
       labs(x = "",
            y = "Number of systematic reviews",
            fill = "") + 
-      ylim(0, dim(filtered_data())[1]) +
+      ylim(0, dim(filtered_sr_count())[1]) +
       theme_minimal() +
       theme(plot.title = element_text(size = 12, face = "bold"),
             axis.title = element_text(size = 12, face = "bold"),
@@ -328,7 +449,7 @@ server <- function(input, output, session) {
                           opts_sizing(rescale = TRUE)) )
   })
   
-  ## amstardomains_tab (amstar_tab 2): Bar plot on AMSTAR domains with level frequency 
+  ## amstardomains_tab (amstar_tab 2): Bar plot on AMSTAR domains with level frequency ----
   output$plotdomains <- renderGirafe({
     # Basic plot
     interactive_various <- ggplot(amstardomains_tab(),
@@ -350,7 +471,7 @@ server <- function(input, output, session) {
       labs(x = "",
            y = "Number of systematic reviews",
            fill = "") + 
-      ylim(0, dim(filtered_data())[1]) +
+      ylim(0, dim(filtered_sr_count())[1]) +
       coord_flip() +
       theme_minimal() + 
       theme(plot.title = element_text(size = 12, face = "bold"),
@@ -370,7 +491,7 @@ server <- function(input, output, session) {
                           opts_sizing(rescale = TRUE)) )
   })
   
-  ## various_tab (amstar_tab 3): Bar plot on reporting and methdology transparency (protocol, PRISMA, RoB, GRADE)
+  ## various_tab (amstar_tab 3): Bar plot on reporting and methodology transparency (protocol, PRISMA, RoB, GRADE) ----
   output$plotvarious <- renderGirafe({
     # Basic plot
     interactive_various <- ggplot(various_tab(),
@@ -390,7 +511,7 @@ server <- function(input, output, session) {
       labs(x = "",
            y = "Number of systematic reviews",
            fill = "") + 
-      ylim(0, dim(filtered_data())[1]) +
+      ylim(0, dim(filtered_sr_count())[1]) +
       theme_minimal() + 
       theme(axis.title = element_text(size = 12, face = "bold"),
             axis.text.y = element_text(size = 12),
@@ -405,10 +526,10 @@ server <- function(input, output, session) {
            height_svg = 5,
            options = list(opts_hover(css = ''), 
                           opts_hover_inv(css = "opacity:0.1;"), 
-                          opts_sizing(rescale = TRUE)) )
+                          opts_sizing(rescale = TRUE)))
   })
 
-  ## databases_data (amstar_tab 4): Circular bar plot on databases
+  ## databases_data (amstar_tab 4): Circular bar plot on databases ----
   output$plotdatabases <- renderGirafe({
     
     # Get the name and the y position of each label
@@ -442,6 +563,12 @@ server <- function(input, output, session) {
                         values = c("#00847e", "#89ccc4"),
                         limits = c("Yes", "No"),
                         drop = FALSE) +
+      geom_image(data = data.frame(x = 0, y = -11, image = "www/ChatGPT_databases.png"), 
+                 aes(x, 
+                     y, 
+                     image = image), 
+                 size = 0.3,
+                 inherit.aes = FALSE) + 
       ylim(-12, 12) +
       coord_polar() +
       theme_minimal() +
@@ -463,7 +590,7 @@ server <- function(input, output, session) {
     
   })
   
-  ## location_data (map_tab): Geographic location of the authors
+  ## location_data (map_tab): Geographic location of the authors ----
   # Load world polygons
   world <- ne_countries(scale = "medium", returnclass = "sf") %>%
     group_by(admin) %>%
@@ -493,7 +620,173 @@ server <- function(input, output, session) {
       )
   })
   
-  ## rawdata (review_tab): Add the coloured AMSTAR cells and the links
+  ## participant_summary (pico_summary): Circular bar plot on the frequency of inclusion & exclusion criteria ----
+  # Sort databases in decreasing order of their frequency
+  participant_data <- reactive({
+    participant_data <- participant_summary() %>% #participant_summary()
+      filter(!duplicated(variable)) %>% 
+      select(-one_of(c("review", "values", "indicator", "values_new"))) %>%
+      group_by(inclusion) %>%
+      arrange(desc(freq), .by_group = TRUE) %>%
+      mutate(values_ord = fct_reorder(variable, freq, .desc = TRUE)) %>%
+      ungroup()
+    
+    # Preparing for circular plot. Source: https://r-graph-gallery.com/297-circular-barplot-with-groups.html 
+    # Set a number of 'empty bar' to add at the end of each group
+    empty_bar <- 1
+    to_add <- data.frame(matrix(NA, empty_bar*nlevels(participant_data$inclusion), ncol(participant_data)))
+    colnames(to_add) <- colnames(participant_data)
+    to_add$inclusion <- rep(levels(participant_data$inclusion), each = empty_bar)
+    participant_data <- rbind(participant_data, to_add)
+    participant_data <- participant_data %>% arrange(inclusion)
+    participant_data$id <- seq(1, nrow(participant_data));participant_data
+  })
+    
+  # Get the circular interactive bar plot
+  output$plotparticipant <- renderGirafe({
+    # Get the name and the y position of each label
+    label_data <- participant_data()
+    number_of_bar <- nrow(label_data)
+    angle <- 90 - 360 * (label_data$id - 0.5) / number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+    label_data$hjust <- ifelse(angle < -90, 1, 0)
+    label_data$angle <- ifelse(angle < -90, angle + 180, angle)
+    
+    # Basic plot
+    interactive_inclusion <- ggplot(participant_data(),
+                                    aes(x = as.factor(id), 
+                                        y = freq, 
+                                        fill = inclusion,
+                                        tooltip = paste0(freq, " (", round(perc * 100), "%)"), 
+                                        data_id = variable)) +      
+      geom_bar_interactive(stat = "identity", 
+                           alpha = 0.5) +
+      geom_text(data = label_data,
+                aes(x = as.factor(id), 
+                    y = freq + 0.5, 
+                    label = variable, 
+                    hjust = hjust), 
+                color = "black", 
+                fontface = "bold", 
+                alpha = 0.6, 
+                size = 4.0, 
+                angle = label_data$angle,
+                inherit.aes = FALSE) + 
+      geom_image(data = data.frame(x = 0, y = -11, image = "www/ChatGPT_databases.png"), 
+                 aes(x, 
+                     y, 
+                     image = image), 
+                 size = 0.3,
+                 inherit.aes = FALSE) + 
+      scale_fill_manual(breaks = c("Inclusion criteria", "Exclusion criteria"),
+                        values = c("#00847e", "#89ccc4"),
+                        limits = c("Inclusion criteria", "Exclusion criteria"),
+                        drop = FALSE) +
+      ylim(-12, 12) +
+      coord_polar() +
+      theme_minimal() +
+      theme(axis.text = element_blank(),
+            axis.title = element_blank(),
+            panel.grid = element_blank(),
+            plot.margin = unit(rep(-1 ,4), "cm"),
+            legend.position = "none",
+            legend.title = element_text(size = 12, face = "bold"),
+            legend.text = element_text(size = 12)) 
+    
+    # Convert to ggiraph object
+    girafe(ggobj = interactive_inclusion,
+           width_svg = 9.5,
+           height_svg = 6.0,
+           options = list(opts_hover(css = ''), 
+                          opts_hover_inv(css = "opacity:0.1;"), 
+                          opts_sizing(rescale = TRUE)))
+  })
+  
+  ## participant_summary (participants): Bubble plot on participant characteristics per review ----
+  output$participantbubble <- renderGirafe({
+    # Basic plot
+    interactive_partic <- ggplot(participant_summary(), 
+                                 aes(x = variable, 
+                                     y = factor(review, levels = unique(review)),
+                                     fill = indicator,
+                                     colour = indicator,
+                                     tooltip = values_new, 
+                                     data_id = review)) +
+      geom_point_interactive(size = 6,
+                             shape = 21,
+                             alpha = 0.6) +
+      scale_fill_manual(breaks = c("Yes", "No"),
+                        values = c("#00847e", "#D55E00")) +
+      scale_colour_manual(breaks = c("Yes", "No"),
+                        values = c("#00847e", "#D55E00")) +
+      facet_grid(cols = vars(factor(inclusion, levels = unique(inclusion))), 
+                 scales = "free") +
+      scale_x_discrete(position = 'top') +
+      labs(x = "",
+           y = "",
+           fill = "Characteristic was reported") + 
+      theme_minimal() +
+      theme(axis.text.y = element_text(size = 9),
+            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0),
+            axis.ticks.x = element_blank(),
+            legend.position = "none",
+            strip.placement = "outside",
+            strip.text = element_text(size = 9.5),
+            strip.background = element_rect(fill = 'white'),
+            strip.switch.pad.grid = unit(10, "pt"))
+    
+    # Convert to ggiraph object
+    girafe(ggobj = interactive_partic,
+           width_svg = 9.5,
+           height_svg = 6.0,
+           options = list(opts_hover(css = ''), 
+                          opts_hover_inv(css = "opacity:0.1;"), 
+                          opts_sizing(rescale = TRUE)))
+  })
+  
+  ## intervention_summary (interventions): Bubble plot on compared interventions per review ----
+  output$interventionbubble <- renderGirafe({
+    # Basic plot
+    interactive_interv <- ggplot(intervention_summary(), 
+                                 aes(x = factor(variable, levels = c("Intervention", "Placebo", "Other drug", "No treatment", "Administration\nroute",
+                                                                      "Dose", "Number of doses", "Dose frequency", "Allergies")), 
+                                     y = factor(review, levels = unique(review)),
+                                     fill = indicator,
+                                     colour = indicator,
+                                     tooltip = values_new, 
+                                     data_id = review)) +
+      geom_point_interactive(size = 6,
+                             shape = 21,
+                             alpha = 0.6) +
+      scale_fill_manual(breaks = c("Yes", "No"),
+                        values = c("#00847e", "#D55E00")) +
+      scale_colour_manual(breaks = c("Yes", "No"),
+                          values = c("#00847e", "#D55E00")) +
+      facet_grid(cols = vars(factor(intervention, levels = unique(intervention))), 
+                 scales = "free") +
+      scale_x_discrete(position = 'top') +
+      labs(x = "",
+           y = "",
+           fill = "Characteristic was reported") + 
+      theme_minimal() +
+      theme(axis.text.y = element_text(size = 9),
+            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0),
+            axis.ticks.x = element_blank(),
+            legend.position = "none",
+            strip.placement = "outside",
+            strip.text = element_text(size = 9.5),
+            strip.background = element_rect(fill = 'white'),
+            strip.switch.pad.grid = unit(10, "pt"))
+    
+    # Convert to ggiraph object
+    girafe(ggobj = interactive_interv,
+           width_svg = 9.5,
+           height_svg = 6.0,
+           options = list(opts_hover(css = ''), 
+                          opts_hover_inv(css = "opacity:0.1;"), 
+                          opts_sizing(rescale = TRUE)))
+  })
+  
+  ## rawdata (review_tab): Add the coloured AMSTAR cells and the links ----
   output$rawDataTable <- renderDT({
     
     # The filtered dataset
@@ -506,6 +799,15 @@ server <- function(input, output, session) {
                   color = 'black')
   })
   
+  # Download data ----
+  output$downloadData <- 
+    downloadHandler(filename = function() {
+      paste("data_sr-", Sys.Date(), ".xlsx", sep = "")
+      },
+      content = function(file) {
+        write_xlsx(data_sr, file)
+        }
+      )
   
   }
 
