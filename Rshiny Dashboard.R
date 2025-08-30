@@ -35,6 +35,9 @@ data_partic <- read_excel("data/systematic reviews & included trials.xlsx", shee
 # Load compared intervention characteristics 
 data_interv <- read_excel("data/systematic reviews & included trials.xlsx", sheet = 4, na = "NA")
 
+# Load investigated outcomes 
+data_outcome <- read_excel("data/systematic reviews & included trials.xlsx", sheet = 5, na = "NA")
+
 
 ## Customising the style of the app (Hebammen Logo: Light blue is #89ccc4, Teal Green is #00847e, #00817b, #00807a, #007f79, #00837d, #00827c, Orange is #f08300, #ef7e00)
 my_theme = create_theme(
@@ -145,21 +148,24 @@ ui <- dashboardPage(
       tabItem(tabName = "pico_summary",  # EDW!!
               h3("PICO features summary"),
               fluidRow(
-                box(title = "Inclusion & exclusion criteria", status = "primary", solidHeader = TRUE, girafeOutput("plotparticipant", width = "100%", height = "400px"))#,
-                #box(title = "Reporting & methodology transparency", status = "primary", solidHeader = TRUE, girafeOutput("plotvarious", width = "100%", height = "350px")),
+                box(title = "Inclusion & exclusion criteria", status = "primary", solidHeader = TRUE, girafeOutput("plotparticipant", width = "100%", height = "400px"))
+              ),
+              fluidRow(
+                #box(title = "Inclusion & exclusion criteria", status = "primary", solidHeader = TRUE, girafeOutput("plotparticipant", width = "100%", height = "400px")),
+                box(title = "Compared interventions characteristics", status = "primary", solidHeader = TRUE, girafeOutput("plotintervention", width = "100%", height = "350px")),
               )
       ),
-      tabItem(tabName = "participant",   # EDW!!
+      tabItem(tabName = "participant",   
               h3("Inclusion & exclusion criteria: were they reported?"),
               girafeOutput("participantbubble")
       ),
-      tabItem(tabName = "interventions",   # EDW!!
+      tabItem(tabName = "interventions",   
               h3("Characteristics of compared interventions: were they reported?"),
               girafeOutput("interventionbubble")
       ),
-      tabItem(tabName = "outcomes",   # EDW!!
-              h3("Maternal & neonatal outcomes")#,
-              #plotOutput("widePlot", height = "400px", width = "1200px")
+      tabItem(tabName = "outcomes",   
+              h3("Duration, maternal & neonatal outcomes: were they reported?"),
+              girafeOutput("outcomebubble")
       ),
       # Fifth tab content
       tabItem(tabName = "review_tab",
@@ -303,7 +309,7 @@ server <- function(input, output, session) {
     tab <- data.frame(country = names(geo_location_sum), melt(geo_location_sum)); tab
   })
   
-  ## participant_data (pico_summary 1 & participants): PICO features summary & participants ----
+  ## participant_data (pico_summary 1, participants): PICO features summary & participants ----
   participant_summary <- reactive({
     # Filtering by year
     partic_filtered <- data_partic[data_partic$Year >= input$year_range[1] & data_partic$Year <= input$year_range[2], ]
@@ -352,7 +358,7 @@ server <- function(input, output, session) {
     partic_long_new$values_new <- ifelse(is.na(partic_long_new$values), "No", partic_long_new$values); partic_long_new
   })
   
-  ## intervention_data (pico_summary 2 & interventions): PICO features summary & interventions ----
+  ## intervention_data (pico_summary 2, interventions): PICO features summary & interventions ----
   intervention_summary <- reactive({
     # Filtering by year
     interv_filtered <- data_interv[data_interv$Year >= input$year_range[1] & data_interv$Year <= input$year_range[2], ]
@@ -382,7 +388,7 @@ server <- function(input, output, session) {
                                 "Dose_int" = "Dose",
                                 "Dose_number_int" = "Number of doses",
                                 "Dose_frequency_int" = "Dose frequency",
-                                "HBB_allergy_int" = "Allergies",
+                                "HBB_allergy_int" = "Intervention\nallergies",
                                 "Admin_route_comp" = "Administration\nroute",
                                 "Dose_comp" = "Dose",
                                 "Dose_frequency_comp" = "Dose frequency"))
@@ -392,6 +398,53 @@ server <- function(input, output, session) {
     
     # Replace NA in 'values' with no (i.e., not reported)
     interv_long_new$values_new <- ifelse(is.na(interv_long_new$values), "No", interv_long_new$values); interv_long_new
+  })
+  
+  ## outcome_data (pico_summary 3 & 4, outcomes): PICO features summary & outcomes ----
+  outcome_summary <- reactive({
+    # Filtering by year
+    outcome_filtered <- data_outcome[data_outcome$Year >= input$year_range[1] & data_outcome$Year <= input$year_range[2], ]
+    
+    # First author with publication year
+    outcome_filtered$`First author` <- paste(outcome_filtered$`First author`, outcome_filtered$Year)
+    
+    # Calculate the absolute frequency of each characteristic
+    outcome_frequency <- colSums(!is.na(outcome_filtered[, -c(1, 2)]))
+    
+    # Data-frame
+    outcome_long <- data.frame(review = unname(unlist(rep(outcome_filtered[, 1], length(colnames(outcome_filtered)[-c(1, 2)])))),
+                              variable = rep(colnames(outcome_filtered)[-c(1, 2)], each = dim(outcome_filtered)[1]),
+                              values = unname(unlist(c(outcome_filtered[, -c(1, 2)]))),
+                              freq = rep(outcome_frequency, each = dim(outcome_filtered)[1]),
+                              perc = rep(outcome_frequency, each = dim(outcome_filtered)[1]) / dim(outcome_filtered)[1])
+    
+    # Include an indicator on whether a characteristic is duration, maternal or neonatal
+    outcome_long$outcome <- ifelse(is.element(outcome_long$variable, c("First stage duration",	"Active phase duration", "Second stage duration",	
+                                                                       "Third stage duration",	"Total duration")), "Labour duration", 
+                                   ifelse(is.element(outcome_long$variable, c("Apgar score", "NICU admission", "Resuscitation need", "Fetal distress", 
+                                                                              "Fetal bradycardia", "Fetal tachycardia", "Meconium-stained liquor")), "Neonatal outcomes", "Maternal outcomes"))
+    # Shorten the name of some variables
+    #outcome_long_new <- outcome_long %>%
+    #  mutate(variable  = recode(variable , 
+    #                            "Postpartum hemorrhage rate" = "Postpartum\nhaemorrhage",
+    #                            "Blood loss after delivery" = "Blood loss\nafter delivery",
+    #                            "Blood transfusion" = "Blood\ntransfusion",
+    #                            "Maternal tachycardia" = "Maternal\ntachycardia",
+    #                            "Maternal mouth dryness" = "Mouth\ndryness",
+    #                            "Maternal headache" = "Maternal\nheadache",
+    #                            "Maternal nausea" = "Maternal\nnausea",
+    #                            "Maternal vomiting" = "Maternal\nvomiting",
+    #                            "Maternal dizziness" = "Maternal\ndizziness",
+    #                            "Maternal giddiness" = "Maternal\ngiddiness",
+    #                            "Maternal face flushing" = "Maternal\nface flushing",
+    #                            "Urinary retention" = "Urinary\nretention",
+    #                            "Cervical laceration" = "Cervical\nlaceration"))
+    
+    # Include an indicator on whether a characteristic was reported or not
+    outcome_long$indicator <- ifelse(is.na(outcome_long$values), "No", "Yes")
+    
+    # Replace NA in 'values' with no outcome_long_new
+    outcome_long$values_new <- ifelse(is.na(outcome_long$values), "No", outcome_long$values); outcome_long
   })
   
   ## rawdata (review_tab): Dataset in Table (Systematic review collection) ----
@@ -620,10 +673,10 @@ server <- function(input, output, session) {
       )
   })
   
-  ## participant_summary (pico_summary): Circular bar plot on the frequency of inclusion & exclusion criteria ----
-  # Sort databases in decreasing order of their frequency
-  participant_data <- reactive({
-    participant_data <- participant_summary() %>% #participant_summary()
+  ## plotparticipant (pico_summary 1): Circular bar plot on the frequency of inclusion & exclusion criteria ----
+  output$plotparticipant <- renderGirafe({
+    # Sort databases in decreasing order of their frequency
+    participant_data <- participant_summary() %>% 
       filter(!duplicated(variable)) %>% 
       select(-one_of(c("review", "values", "indicator", "values_new"))) %>%
       group_by(inclusion) %>%
@@ -640,19 +693,16 @@ server <- function(input, output, session) {
     participant_data <- rbind(participant_data, to_add)
     participant_data <- participant_data %>% arrange(inclusion)
     participant_data$id <- seq(1, nrow(participant_data));participant_data
-  })
     
-  # Get the circular interactive bar plot
-  output$plotparticipant <- renderGirafe({
     # Get the name and the y position of each label
-    label_data <- participant_data()
+    label_data <- participant_data
     number_of_bar <- nrow(label_data)
     angle <- 90 - 360 * (label_data$id - 0.5) / number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
     label_data$hjust <- ifelse(angle < -90, 1, 0)
     label_data$angle <- ifelse(angle < -90, angle + 180, angle)
     
     # Basic plot
-    interactive_inclusion <- ggplot(participant_data(),
+    interactive_inclusion <- ggplot(participant_data,
                                     aes(x = as.factor(id), 
                                         y = freq, 
                                         fill = inclusion,
@@ -701,6 +751,64 @@ server <- function(input, output, session) {
                           opts_sizing(rescale = TRUE)))
   })
   
+  ## plotintervention (pico_summary 2): Bubble plot on participant characteristics per review ----
+  output$plotintervention <- renderGirafe({
+    # Sort databases in decreasing order of their frequency
+    intervention_data <- intervention_summary() %>% 
+      group_by(intervention) %>%
+      filter(!duplicated(variable)) %>% 
+      select(-one_of(c("review", "values", "indicator", "values_new"))) %>%
+      group_by(intervention) %>%
+      arrange(desc(freq), .by_group = TRUE) %>%
+      mutate(values_ord = fct_reorder(variable, freq, .desc = TRUE)) %>%
+      ungroup()
+    
+    # Number of reviews (based on filtering by year)
+    reviews_count <- intervention_summary() %>% filter(!duplicated(review))
+    
+    # Add the 'no' absolute and relative frequency
+    intervention_data_new <- data.frame(variable = rep(intervention_data$variable, 2),
+                                        reported = rep(c("Yes", "No"), rep(dim(intervention_data)[1], 2)),
+                                        freq = c(intervention_data$freq, dim(reviews_count)[1] - intervention_data$freq),
+                                        perc = c(intervention_data$perc, 1 - intervention_data$perc),
+                                        intervention = rep(intervention_data$intervention, 2))
+    
+    # Basic plot
+    interactive_interv <- ggplot(intervention_data_new,
+                                aes(x = factor(variable, levels = rev(c("Intervention", "Placebo", "Other drug", "No treatment", "Administration\nroute",
+                                                                        "Dose", "Number of doses", "Dose frequency", "Intervention\nallergies"))),
+                                    y = freq,
+                                    fill = factor(reported, levels = c("Yes", "No")),
+                                    tooltip = paste0(reported, ": ", freq, " (", round(perc * 100), "%)"), 
+                                    data_id = variable)) +
+      geom_bar_interactive(stat = "identity", 
+                           show.legend = TRUE) +     
+      scale_fill_manual(breaks = c("Yes", "No"),
+                        values = c("#00847e", "#D55E00"),
+                        limits = c("Yes", "No"),
+                        drop = FALSE) +
+      facet_wrap(vars(factor(intervention, levels = c("Intervention", "Comparator")))) +
+      labs(x = "",
+           y = "Number of systematic reviews",
+           fill = "") + 
+      ylim(0, dim(filtered_sr_count())[1]) +
+      coord_flip() +
+      theme_minimal() + 
+      theme(axis.title = element_text(size = 12, face = "bold"),
+            axis.text = element_text(size = 12),
+            strip.text = element_text(size = 12, face = "bold"),
+            legend.position = "none")
+    
+    # Convert to ggiraph object
+    girafe(ggobj = interactive_interv,
+           width_svg = 9.5,
+           height_svg = 5,
+           options = list(opts_hover(css = ''), 
+                          opts_hover_inv(css = "opacity:0.1;"), 
+                          opts_sizing(rescale = TRUE)))
+    
+  })
+
   ## participant_summary (participants): Bubble plot on participant characteristics per review ----
   output$participantbubble <- renderGirafe({
     # Basic plot
@@ -748,7 +856,7 @@ server <- function(input, output, session) {
     # Basic plot
     interactive_interv <- ggplot(intervention_summary(), 
                                  aes(x = factor(variable, levels = c("Intervention", "Placebo", "Other drug", "No treatment", "Administration\nroute",
-                                                                      "Dose", "Number of doses", "Dose frequency", "Allergies")), 
+                                                                      "Dose", "Number of doses", "Dose frequency", "Intervention\nallergies")), 
                                      y = factor(review, levels = unique(review)),
                                      fill = indicator,
                                      colour = indicator,
@@ -779,6 +887,49 @@ server <- function(input, output, session) {
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_interv,
+           width_svg = 9.5,
+           height_svg = 6.0,
+           options = list(opts_hover(css = ''), 
+                          opts_hover_inv(css = "opacity:0.1;"), 
+                          opts_sizing(rescale = TRUE)))
+  })
+  
+  ## outcome_summary (outcomes): Bubble plot on investigated outcomes per review ----
+  output$outcomebubble <- renderGirafe({
+    # Basic plot
+    interactive_outcome <- ggplot(outcome_summary(), 
+                                  aes(x = variable, 
+                                      y = factor(review, levels = unique(review)),
+                                      fill = indicator,
+                                      colour = indicator,
+                                      tooltip = values_new, 
+                                      data_id = review)) +
+      geom_point_interactive(size = 6,
+                             shape = 21,
+                             alpha = 0.6) +
+      scale_fill_manual(breaks = c("Yes", "No"),
+                        values = c("#00847e", "#D55E00")) +
+      scale_colour_manual(breaks = c("Yes", "No"),
+                          values = c("#00847e", "#D55E00")) +
+      facet_grid(cols = vars(factor(outcome, levels = c("Labour duration", "Maternal outcomes", "Neonatal outcomes"))), 
+                 scales = "free_x",
+                 space = "free_x") +
+      scale_x_discrete(position = 'top') +
+      labs(x = "",
+           y = "",
+           fill = "Characteristic was reported") + 
+      theme_minimal() +
+      theme(axis.text.y = element_text(size = 9),
+            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0),
+            axis.ticks.x = element_blank(),
+            legend.position = "none",
+            strip.placement = "outside",
+            strip.text = element_text(size = 9.5),
+            strip.background = element_rect(fill = 'white'),
+            strip.switch.pad.grid = unit(10, "pt"))
+    
+    # Convert to ggiraph object
+    girafe(ggobj = interactive_outcome,
            width_svg = 9.5,
            height_svg = 6.0,
            options = list(opts_hover(css = ''), 
