@@ -54,6 +54,7 @@ ui <- dashboardPage(
       menuItem("About", tabName = "about", icon = icon("info-circle")),  # A few words about the app
       menuItem("Quality summary", tabName = "amstar_tab", icon = icon("dashboard")),
       menuItem("Map", tabName = "map_tab", icon = icon("globe")),
+      menuItem("AMSTAR 2", tabName = "amstarreview_tab", icon = icon("ranking-star")),
       menuItem("PICO features", tabName = "pico_tab", icon = icon("magnifying-glass-chart"),
                menuSubItem("Features summary", tabName = "pico_summary"),
                menuSubItem("Participant characteristics", tabName = "participant"),
@@ -131,11 +132,11 @@ ui <- dashboardPage(
       tabItem(tabName = "amstar_tab",
               h2("Research quality of systematic reviews on labour duration"),
               fluidRow(
-                box(title = "AMSTAR overall confidence", status = "primary", solidHeader = TRUE, girafeOutput("plotamstar", width = "100%", height = "350px")),
+                box(title = "AMSTAR 2 overall confidence", status = "primary", solidHeader = TRUE, girafeOutput("plotamstar", width = "100%", height = "350px")),
                 box(title = "Reporting & methodology transparency", status = "primary", solidHeader = TRUE, girafeOutput("plotvarious", width = "100%", height = "350px")),
                 ),
               fluidRow(
-                box(title = "AMSTAR item ratings", status = "primary", solidHeader = TRUE, tags$br(), girafeOutput("plotdomains", width = "100%", height = "380px")),
+                box(title = "AMSTAR 2 item ratings", status = "primary", solidHeader = TRUE, tags$br(), girafeOutput("plotdomains", width = "100%", height = "380px")),
                 box(title = "Databases for literature searches", status = "primary", solidHeader = TRUE, girafeOutput("plotdatabases", width = "100%", height = "400px"))
               )
               ),
@@ -145,14 +146,20 @@ ui <- dashboardPage(
               leafletOutput("map", height = "1200px")
               ),
       # Fourth tab content
-      tabItem(tabName = "pico_summary",  # EDW!!
+      tabItem(tabName = "amstarreview_tab",
+              h2("AMSTAR 2 detailed assessment"),
+              girafeOutput("amstarreview")
+              ),
+      # Fifth tab content
+      tabItem(tabName = "pico_summary", 
               h3("PICO features summary"),
               fluidRow(
-                box(title = "Inclusion & exclusion criteria", status = "primary", solidHeader = TRUE, girafeOutput("plotparticipant", width = "100%", height = "400px"))
+                box(title = "Inclusion & exclusion criteria", status = "primary", solidHeader = TRUE, girafeOutput("plotparticipant", width = "100%", height = "400px")),
+                box(title = "Maternal & neonatal outcomes", status = "primary", solidHeader = TRUE, girafeOutput("plotmaternalneonatal", width = "100%", height = "400px"))
               ),
               fluidRow(
-                #box(title = "Inclusion & exclusion criteria", status = "primary", solidHeader = TRUE, girafeOutput("plotparticipant", width = "100%", height = "400px")),
                 box(title = "Compared interventions characteristics", status = "primary", solidHeader = TRUE, girafeOutput("plotintervention", width = "100%", height = "350px")),
+                box(title = "Labour duration outcomes", status = "primary", solidHeader = TRUE, girafeOutput("plotlabourduration", width = "100%", height = "350px"))
               )
       ),
       tabItem(tabName = "participant",   
@@ -164,10 +171,10 @@ ui <- dashboardPage(
               girafeOutput("interventionbubble")
       ),
       tabItem(tabName = "outcomes",   
-              h3("Duration, maternal & neonatal outcomes: were they reported?"),
+              h3("Labour duration, maternal & neonatal outcomes: were they reported?"),
               girafeOutput("outcomebubble")
       ),
-      # Fifth tab content
+      # Sixth tab content
       tabItem(tabName = "review_tab",
               h2("Systematic reviews on labour duration"),
               downloadButton("downloadData", "Download Excel"),
@@ -673,6 +680,75 @@ server <- function(input, output, session) {
       )
   })
   
+  ## amstarreview_tab: Bubble plot on AMSTAR2 detailed results per systematic review ----
+  output$amstarreview <- renderGirafe({
+    # Create long dataset for AMSTAR scores per domain and review
+    data_amstar <- melt(data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], c(1, seq(17, 47, 2))], id.vars = c("Authors")) 
+    
+    # Create long dataset for AMSTAR comments per domain and review
+    data_comments <- melt(data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], c(1, seq(18, 48, 2))], id.vars = c("Authors")) 
+    
+    # Merge both aforementioned datasets 
+    data_complete <- data.frame(data_amstar, data_comments[, 3]); colnames(data_complete)[4] <- "comment"
+    
+    # Indicate the critical domains
+    data_complete$critical <- ifelse(is.element(data_complete$variable, c(paste("Domain", c(2, 4, 7, 9, 11, 13, 15)))), "Critical", "Non-critical") 
+    
+    # Rename the domains
+    levels(data_complete$variable) <- c("1. PICO  features reported", "2. Protocol and documented deviations", "3. Selected study design explained", "4. Comprehensive search strategy",
+                                        "5. Study selection in duplicate", "6. Data extraction in duplicate", "7. List of excluded studies with justifications", "8. Included studies adequately described",
+                                        "9. Satisfactory tool for assessing risk of bias", "10. Funding sources of included studies", "11. Appropriate statistical methods", "12. Assessing risk of bias impact on results",
+                                        "13. Risk of bias impact on conclusions", "14. Heterogeneity satisfactorily discussed", "15. Publication bias adequately investigated", "16. Conflict of interest disclosed")
+    
+    # Add the year after filtering
+    data_complete$Year <- rep(c(melt(data_sr[data_sr$Year >= input$year_range[1] & data_sr$Year <= input$year_range[2], 4])$value), 16)
+    
+    # First author with publication year
+    data_complete$Authors <- paste(data_complete$Authors, "\n", data_complete$Year)
+    
+    # Basic plot
+    interactive_amstarreview <- ggplot(data_complete, 
+                                       aes(x = factor(Authors, levels = unique(Authors)),
+                                           y = factor(variable, levels = rev(levels(variable))),
+                                           tooltip = comment, 
+                                           data_id = Authors)) +
+      geom_point_interactive(aes(colour = value,
+                                 fill = critical),
+                             size = 6,
+                             shape = 21,
+                             stroke = 2.5) +
+      scale_colour_manual(name = "Item is flawless",
+                          breaks = c("Yes", "Partial yes", "No"),
+                          values = c("#00847e", "#FFC20A", "#D55E00")) +
+      scale_fill_manual(name = "Critical item",
+                        breaks = c("Critical", "Non-critical"),
+                        values = c("black", "white"),
+                        labels = c("Critical" = "Yes", "Non-critical" = "No")) +
+      guides(fill = guide_legend(override.aes = list(size = 3, stroke = 1.8)),
+             colour = guide_legend(override.aes = list(size = 3, stroke = 1.8), order = 1)) + 
+      labs(x = "",
+           y = "",
+           fill = "",
+           colour = "") + 
+      scale_x_discrete(position = 'top') +
+      theme_classic() +
+      theme(axis.text.y = element_text(size = 9),
+            axis.text.x = element_text(size = 9),
+            axis.ticks.x = element_blank(),
+            legend.position = "bottom",
+            legend.margin = margin(t = -10),
+            legend.title = element_text(size = 9, face = "bold"),
+            legend.text = element_text(size = 9))
+    
+    # Convert to ggiraph object
+    girafe(ggobj = interactive_amstarreview,
+           width_svg = 9.5,
+           height_svg = 6.0,
+           options = list(opts_hover(css = ''), 
+                          opts_hover_inv(css = "opacity:0.1;"), 
+                          opts_sizing(rescale = TRUE)))
+  })
+  
   ## plotparticipant (pico_summary 1): Circular bar plot on the frequency of inclusion & exclusion criteria ----
   output$plotparticipant <- renderGirafe({
     # Sort databases in decreasing order of their frequency
@@ -721,12 +797,12 @@ server <- function(input, output, session) {
                 size = 4.0, 
                 angle = label_data$angle,
                 inherit.aes = FALSE) + 
-      geom_image(data = data.frame(x = 0, y = -11, image = "www/ChatGPT_databases.png"), 
-                 aes(x, 
-                     y, 
-                     image = image), 
-                 size = 0.3,
-                 inherit.aes = FALSE) + 
+      #geom_image(data = data.frame(x = 0, y = -11, image = "www/ChatGPT_databases.png"), 
+      #           aes(x, 
+      #               y, 
+      #               image = image), 
+      #           size = 0.3,
+      #           inherit.aes = FALSE) + 
       scale_fill_manual(breaks = c("Inclusion criteria", "Exclusion criteria"),
                         values = c("#00847e", "#89ccc4"),
                         limits = c("Inclusion criteria", "Exclusion criteria"),
@@ -751,7 +827,7 @@ server <- function(input, output, session) {
                           opts_sizing(rescale = TRUE)))
   })
   
-  ## plotintervention (pico_summary 2): Bubble plot on participant characteristics per review ----
+  ## plotintervention (pico_summary 2): Bar plot on the frequency of the interventions characteristics ----
   output$plotintervention <- renderGirafe({
     # Sort databases in decreasing order of their frequency
     intervention_data <- intervention_summary() %>% 
@@ -808,6 +884,141 @@ server <- function(input, output, session) {
                           opts_sizing(rescale = TRUE)))
     
   })
+  
+  ## plotmaternalneonatal (pico_summary 3): Circular bar plot on the frequency of maternal & neonatal outcomes ----
+  output$plotmaternalneonatal <- renderGirafe({
+    # Sort databases in decreasing order of their frequency
+    maternalneonatal_data <- outcome_summary() %>% 
+      filter(!duplicated(variable) & !(outcome == "Labour duration")) %>% 
+      select(-one_of(c("review", "values", "indicator"))) %>%
+      group_by(outcome) %>%
+      arrange(desc(freq), .by_group = TRUE) %>%
+      mutate(values_ord = fct_reorder(variable, freq, .desc = TRUE)) %>%
+      ungroup()
+    
+    # Preparing for circular plot. Source: https://r-graph-gallery.com/297-circular-barplot-with-groups.html 
+    # Set a number of 'empty bar' to add at the end of each group
+    empty_bar <- 1
+    to_add <- data.frame(matrix(NA, empty_bar*nlevels(maternalneonatal_data$outcome), ncol(maternalneonatal_data)))
+    colnames(to_add) <- colnames(maternalneonatal_data)
+    to_add$inclusion <- rep(levels(maternalneonatal_data$outcome), each = empty_bar)
+    maternalneonatal_data <- rbind(maternalneonatal_data, to_add)
+    maternalneonatal_data <- maternalneonatal_data %>% arrange(outcome)
+    maternalneonatal_data$id <- seq(1, nrow(maternalneonatal_data));maternalneonatal_data
+    
+    # Get the name and the y position of each label
+    label_data <- maternalneonatal_data
+    number_of_bar <- nrow(label_data)
+    angle <- 90 - 360 * (label_data$id - 0.5) / number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+    label_data$hjust <- ifelse(angle < -90, 1, 0)
+    label_data$angle <- ifelse(angle < -90, angle + 180, angle)
+    
+    # Basic plot
+    interactive_maternalneonatal <- 
+      ggplot(maternalneonatal_data,
+             aes(x = as.factor(id), 
+                 y = freq, 
+                 fill = outcome,
+                 tooltip = paste0(freq, " (", round(perc * 100), "%)"), 
+                 data_id = variable)) +      
+      geom_bar_interactive(stat = "identity", 
+                           alpha = 0.5) +
+      geom_text(data = label_data,
+                aes(x = as.factor(id), 
+                    y = freq + 0.5, 
+                    label = variable, 
+                    hjust = hjust), 
+                color = "black", 
+                fontface = "bold", 
+                alpha = 0.6, 
+                size = 4.0, 
+                angle = label_data$angle,
+                inherit.aes = FALSE) + 
+      #geom_image(data = data.frame(x = 0, y = -11, image = "www/ChatGPT_databases.png"), 
+      #           aes(x, 
+      #               y, 
+      #               image = image), 
+      #           size = 0.3,
+      #           inherit.aes = FALSE) + 
+      scale_fill_manual(breaks = c("Maternal outcomes", "Neonatal outcomes"),
+                        values = c("#00847e", "#89ccc4"),
+                        limits = c("Maternal outcomes", "Neonatal outcomes"),
+                        drop = FALSE) +
+      ylim(-20, 20) +
+      coord_polar() +
+      theme_minimal() +
+      theme(axis.text = element_blank(),
+            axis.title = element_blank(),
+            panel.grid = element_blank(),
+            plot.margin = unit(rep(-1 ,4), "cm"),
+            legend.position = "none",
+            legend.title = element_text(size = 12, face = "bold"),
+            legend.text = element_text(size = 12)) 
+    
+    # Convert to ggiraph object
+    girafe(ggobj = interactive_maternalneonatal,
+           width_svg = 9.5,
+           height_svg = 6.0,
+           options = list(opts_hover(css = ''), 
+                          opts_hover_inv(css = "opacity:0.1;"), 
+                          opts_sizing(rescale = TRUE)))
+  })
+  
+  ## plotlabourduration (pico_summary 4): Bar plot on the frequency of labour duration outcomes ----
+  output$plotlabourduration <- renderGirafe({
+    # Sort databases in decreasing order of their frequency
+    labourduration_data <- outcome_summary() %>% 
+      filter(!duplicated(variable) & (outcome == "Labour duration")) %>% 
+      select(-one_of(c("review", "values", "indicator"))) %>%
+      group_by(outcome) %>%
+      arrange(desc(freq), .by_group = TRUE) %>%
+      mutate(values_ord = fct_reorder(variable, freq, .desc = TRUE)) %>%
+      ungroup()
+    
+    # Number of reviews (based on filtering by year)
+    reviews_count <- outcome_summary() %>% filter(!duplicated(review))
+    
+    # Add the 'no' absolute and relative frequency
+    labourduration_data_new <- data.frame(variable = rep(labourduration_data$variable, 2),
+                                          reported = rep(c("Yes", "No"), rep(dim(labourduration_data)[1], 2)),
+                                          freq = c(labourduration_data$freq, dim(reviews_count)[1] - labourduration_data$freq),
+                                          perc = c(labourduration_data$perc, 1 - labourduration_data$perc),
+                                          outcome = rep(labourduration_data$outcome, 2))
+    
+    # Basic plot
+    interactive_labourdur <- ggplot(labourduration_data_new,
+                                    aes(x = factor(variable, levels = rev(c("First stage duration", "Active phase duration", "Second stage duration", "Third stage duration", "Total duration"))),
+                                     y = freq,
+                                     fill = factor(reported, levels = c("Yes", "No")),
+                                     tooltip = paste0(reported, ": ", freq, " (", round(perc * 100), "%)"), 
+                                     data_id = variable)) +
+      geom_bar_interactive(stat = "identity", 
+                           show.legend = TRUE) +     
+      scale_fill_manual(breaks = c("Yes", "No"),
+                        values = c("#00847e", "#D55E00"),
+                        limits = c("Yes", "No"),
+                        drop = FALSE) +
+      #facet_wrap(vars(factor(intervention, levels = c("Intervention", "Comparator")))) +
+      labs(x = "",
+           y = "Number of systematic reviews",
+           fill = "") + 
+      ylim(0, dim(filtered_sr_count())[1]) +
+      coord_flip() +
+      theme_minimal() + 
+      theme(axis.title = element_text(size = 12, face = "bold"),
+            axis.text = element_text(size = 12),
+            strip.text = element_text(size = 12, face = "bold"),
+            legend.position = "none")
+    
+    # Convert to ggiraph object
+    girafe(ggobj = interactive_labourdur,
+           width_svg = 9.5,
+           height_svg = 5,
+           options = list(opts_hover(css = ''), 
+                          opts_hover_inv(css = "opacity:0.1;"), 
+                          opts_sizing(rescale = TRUE)))
+    
+  })
 
   ## participant_summary (participants): Bubble plot on participant characteristics per review ----
   output$participantbubble <- renderGirafe({
@@ -838,8 +1049,8 @@ server <- function(input, output, session) {
             axis.ticks.x = element_blank(),
             legend.position = "none",
             strip.placement = "outside",
-            strip.text = element_text(size = 9.5),
-            strip.background = element_rect(fill = 'white'),
+            strip.text = element_text(size = 9.5, colour = "white"),
+            strip.background = element_rect(fill = "#00847e", colour = "#00847e"),
             strip.switch.pad.grid = unit(10, "pt"))
     
     # Convert to ggiraph object
@@ -881,8 +1092,8 @@ server <- function(input, output, session) {
             axis.ticks.x = element_blank(),
             legend.position = "none",
             strip.placement = "outside",
-            strip.text = element_text(size = 9.5),
-            strip.background = element_rect(fill = 'white'),
+            strip.text = element_text(size = 9.5, colour = "white"),
+            strip.background = element_rect(fill = "#00847e", colour = "#00847e"),
             strip.switch.pad.grid = unit(10, "pt"))
     
     # Convert to ggiraph object
@@ -924,8 +1135,8 @@ server <- function(input, output, session) {
             axis.ticks.x = element_blank(),
             legend.position = "none",
             strip.placement = "outside",
-            strip.text = element_text(size = 9.5),
-            strip.background = element_rect(fill = 'white'),
+            strip.text = element_text(size = 9.5, colour = "white"),
+            strip.background = element_rect(fill = "#00847e", colour = "#00847e"),
             strip.switch.pad.grid = unit(10, "pt"))
     
     # Convert to ggiraph object
