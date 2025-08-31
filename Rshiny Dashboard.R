@@ -120,6 +120,14 @@ ui <- dashboardPage(
         color: #00847e !important;
         font-family: 'Arial';
         }
+        footer {
+        flex-shrink: 0;
+        text-align: center;
+        color: #777;
+        padding: 10px;
+        font-size: 12px;
+        border-top: 1px solid #ddd;
+        }
       "))
     ),
     tabItems(
@@ -181,7 +189,12 @@ ui <- dashboardPage(
               br(), br(),
               DTOutput("rawDataTable")
               )
-      )
+      ),
+    tags$footer(
+      HTML(sprintf("Developed by %s · %s", "Loukia Spineli", sprintf(format(Sys.Date(), "%Y"))
+                   )
+           )
+      ),
     )  # dashboardBody
 )
 
