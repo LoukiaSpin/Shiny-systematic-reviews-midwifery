@@ -134,7 +134,7 @@ ui <- dashboardPage(
       # First tab content
       tabItem(tabName = "about",
               h2(""),
-              p("This dashboard")
+              includeMarkdown("About_text.md")
       ),
       # Second tab content
       tabItem(tabName = "amstar_tab",
@@ -355,21 +355,22 @@ server <- function(input, output, session) {
     
     # Shorten the name of some variables
     partic_long_new <- partic_long %>%
-      mutate(variable  = recode(variable , 
-                                "Singleton pregnancy" = "Singleton\npregnancy",
-                                "Gestational age" = "Gestational\nage",
-                                "Vertex positioning" = "Vertex\npositioning",
-                                "Membranes intact" = "Membranes\nintact",
-                                "Uterine contractions" = "Uterine\ncontractions",
-                                "Cervical dilatation" = "Cervical\ndilatation",
-                                "Labour management" = "Labour\nmanagement",
-                                "Pregnancy risk" = "Pregnancy\nrisk",
-                                "Placenta abruption" ="Placenta\nabruption",
-                                "Previous uterine surgery" = "Previous uterine\nsurgery",
-                                "Vaginal delivery contraindications" = "Vaginal delivery\ncontraindications",
-                                "Previous caesarian delivery" = "Previous caesarian\ndelivery",
-                                "Pregnancy-induced illness" = "Pregnancy-induced\nillness",
-                                "Other placental conditions" = "Other placental\nconditions"))
+      mutate(variable_new = variable) %>%    # Copy 'variable' into 'variable_new'
+      mutate(variable_new = recode(variable_new, 
+                                   #"Singleton pregnancy" = "Singleton\npregnancy",
+                                   "Gestational age" = "Gestational\nage",
+                                   #"Vertex positioning" = "Vertex\npositioning",
+                                   #"Membranes intact" = "Membranes\nintact",
+                                   #"Uterine contractions" = "Uterine\ncontractions",
+                                   #"Cervical dilatation" = "Cervical\ndilatation",
+                                   "Labour management" = "Labour\nmanagement",
+                                   #"Pregnancy risk" = "Pregnancy\nrisk",
+                                   "Placenta abruption" ="Placenta\nabruption",
+                                   "Previous uterine surgery" = "Previous uterine\nsurgery",
+                                   "Vaginal delivery contraindications" = "Vaginal delivery\ncontraindications",
+                                   "Previous caesarian delivery" = "Previous caesarian\ndelivery",
+                                   "Pregnancy-induced illness" = "Pregnancy-induced\nillness",
+                                   "Other placental conditions" = "Other placental\nconditions"),)
     
     # Include an indicator on whether a characteristic was reported or not
     partic_long_new$indicator <- ifelse(is.na(partic_long_new$values), "No", "Yes")
@@ -802,7 +803,7 @@ server <- function(input, output, session) {
       geom_text(data = label_data,
                 aes(x = as.factor(id), 
                     y = freq + 0.5, 
-                    label = variable, 
+                    label = variable_new, 
                     hjust = hjust), 
                 color = "black", 
                 fontface = "bold", 
