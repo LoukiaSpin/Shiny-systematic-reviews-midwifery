@@ -544,7 +544,9 @@ server <- function(input, output, session) {
                          values = c(1, 0.6)) +
       labs(x = "",
            y = "Number of systematic reviews",
-           fill = "") + 
+           fill = "",
+           alpha = "Domain is") + 
+      guides(fill = FALSE) +
       ylim(0, dim(filtered_sr_count())[1]) +
       coord_flip() +
       theme_minimal() + 
@@ -552,7 +554,7 @@ server <- function(input, output, session) {
             axis.title = element_text(size = 12, face = "bold"),
             axis.text = element_text(size = 12),
             strip.text = element_text(size = 12, face = "bold"),
-            legend.position = "none",
+            legend.position = "bottom",
             legend.title = element_text(size = 12, face = "bold"),
             legend.text = element_text(size = 12))
     
@@ -617,9 +619,9 @@ server <- function(input, output, session) {
     interactive_databases <- ggplot(databases_data(),
                                     aes(x = as.factor(id), 
                                         y = n, 
-                                        fill = grey,
+                                        fill = factor(grey, levels = c("Yes", "No")),
                                         tooltip = paste0(n, " (", round(perc * 100), "%)"), 
-                                        data_id = values)) +      
+                                        data_id = values)) +  
       geom_bar_interactive(stat = "identity", 
                            alpha = 0.5) +
       geom_text(data = label_data,
@@ -635,7 +637,6 @@ server <- function(input, output, session) {
                 inherit.aes = FALSE) + 
       scale_fill_manual(breaks = c("Yes", "No"),
                         values = c("#00847e", "#89ccc4"),
-                        limits = c("Yes", "No"),
                         drop = FALSE) +
       geom_image(data = data.frame(x = 0, y = -11, image = "www/ChatGPT_databases.png"), 
                  aes(x, 
@@ -643,14 +644,15 @@ server <- function(input, output, session) {
                      image = image), 
                  size = 0.3,
                  inherit.aes = FALSE) + 
+      labs(fill = "Contains grey literature") +
       ylim(-12, 12) +
       coord_polar() +
       theme_minimal() +
       theme(axis.text = element_blank(),
             axis.title = element_blank(),
             panel.grid = element_blank(),
-            plot.margin = unit(rep(-1 ,4), "cm"),
-            legend.position = "none",
+           # plot.margin = unit(rep(-1 ,4), "cm"),
+            legend.position = "bottom",
             legend.title = element_text(size = 12, face = "bold"),
             legend.text = element_text(size = 12)) 
     
@@ -819,16 +821,16 @@ server <- function(input, output, session) {
       #           inherit.aes = FALSE) + 
       scale_fill_manual(breaks = c("Inclusion criteria", "Exclusion criteria"),
                         values = c("#00847e", "#89ccc4"),
-                        limits = c("Inclusion criteria", "Exclusion criteria"),
                         drop = FALSE) +
+      labs(fill = " ") +
       ylim(-12, 12) +
       coord_polar() +
       theme_minimal() +
       theme(axis.text = element_blank(),
             axis.title = element_blank(),
             panel.grid = element_blank(),
-            plot.margin = unit(rep(-1 ,4), "cm"),
-            legend.position = "none",
+            #plot.margin = unit(rep(-1 ,4), "cm"),
+            legend.position = "bottom",
             legend.title = element_text(size = 12, face = "bold"),
             legend.text = element_text(size = 12)) 
     
@@ -862,10 +864,11 @@ server <- function(input, output, session) {
                                         freq = c(intervention_data$freq, dim(reviews_count)[1] - intervention_data$freq),
                                         perc = c(intervention_data$perc, 1 - intervention_data$perc),
                                         intervention = rep(intervention_data$intervention, 2))
+    intervention_data_new$variable[intervention_data_new$variable == "Intervention"] <- "Hyoscine butylbromide"
     
     # Basic plot
     interactive_interv <- ggplot(intervention_data_new,
-                                aes(x = factor(variable, levels = rev(c("Intervention", "Placebo", "Other drug", "No treatment", "Administration\nroute",
+                                aes(x = factor(variable, levels = rev(c("Hyoscine butylbromide", "Placebo", "Other drug", "No treatment", "Administration\nroute",
                                                                         "Dose", "Number of doses", "Dose frequency", "Intervention\nallergies"))),
                                     y = freq,
                                     fill = factor(reported, levels = c("Yes", "No")),
@@ -956,16 +959,16 @@ server <- function(input, output, session) {
       #           inherit.aes = FALSE) + 
       scale_fill_manual(breaks = c("Maternal outcomes", "Neonatal outcomes"),
                         values = c("#00847e", "#89ccc4"),
-                        limits = c("Maternal outcomes", "Neonatal outcomes"),
                         drop = FALSE) +
+      labs(fill = " ") +
       ylim(-20, 20) +
       coord_polar() +
       theme_minimal() +
       theme(axis.text = element_blank(),
             axis.title = element_blank(),
             panel.grid = element_blank(),
-            plot.margin = unit(rep(-1 ,4), "cm"),
-            legend.position = "none",
+           # plot.margin = unit(rep(-1 ,4), "cm"),
+            legend.position = "bottom",
             legend.title = element_text(size = 12, face = "bold"),
             legend.text = element_text(size = 12)) 
     

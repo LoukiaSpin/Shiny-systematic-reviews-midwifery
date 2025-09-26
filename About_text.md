@@ -26,7 +26,7 @@ A great feature of the dashboard is that all visualisations offer interactivity,
 <br><br>
 <span style="font-size: 20px;"><strong>References</strong></span> 
 <br>
-<ol style="font-size: 20px; margin-left: 0; padding-left: 17px;">
+<ol style="font-size: 20px; margin-left: 0; padding-left: 18px;">
 <li>Bastian H, Glasziou P, Chalmers I. Seventy-five trials and eleven systematic reviews a day: How will we ever keep up? PLoS Med 2010;7. https://doi.org/10.1371/journal.pmed.1000326.</a></li>
 <li>Ioannidis JPA. The Mass Production of Redundant, Misleading, and Conflicted Systematic Reviews and Meta-analyses. Milbank Q 2016;94:485–514. https://doi.org/10.1111/1468-0009.12210.</a></li>
 <li>Page MJ, Moher D, Bossuyt PM, Boutron I, Hoffmann TC, Mulrow CD, et al. PRISMA 2020 explanation and elaboration: Updated guidance and exemplars for reporting systematic reviews. The BMJ 2021;372. https://doi.org/10.1136/bmj.n160.</a></li>
