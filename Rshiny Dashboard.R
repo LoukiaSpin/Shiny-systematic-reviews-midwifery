@@ -138,7 +138,7 @@ ui <- dashboardPage(
       ),
       # Second tab content
       tabItem(tabName = "amstar_tab",
-              h2("Research quality of systematic reviews on labour duration"),
+              h2("Research quality of systematic reviews on hyoscine butylbromide for labour duration"),
               fluidRow(
                 box(title = "AMSTAR 2 overall confidence", status = "primary", solidHeader = TRUE, girafeOutput("plotamstar", width = "100%", height = "350px")),
                 box(title = "Reporting & methodology transparency", status = "primary", solidHeader = TRUE, girafeOutput("plotvarious", width = "100%", height = "350px")),
