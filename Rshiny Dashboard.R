@@ -74,7 +74,7 @@ ui <- dashboardPage(
       #)
     ), 
     div( # Adding logo
-      img(src = "Logo_Hebammenwissenschaft.png", height = "85px"),  # put your logo in www/logo.png
+      img(src = "", height = "85px"),  # Logo_Hebammenwissenschaft.png
       style = "position: absolute; bottom: 30px; left: 8px;"
     )
   ),
@@ -584,7 +584,7 @@ server <- function(input, output, session) {
                         drop = FALSE) +
       facet_wrap(vars(factor(Var1, levels = c("Protocol available", "PRISMA mentioned", "Risk of bias assessed", "GRADE applied"))),
                  ncol = 4) +
-      labs(x = "",
+      labs(x = NULL,
            y = "Number of systematic reviews",
            fill = "") + 
       ylim(0, dim(filtered_sr_count())[1]) +
@@ -594,7 +594,10 @@ server <- function(input, output, session) {
             axis.text.x = element_blank(),
             axis.ticks.x = element_blank(),
             strip.text = element_text(size = 12, face = "bold"),
-            legend.position = "none")
+            legend.position = "bottom",
+            legend.margin = margin(t = -12),
+            legend.title = element_text(size = 12, face = "bold"),
+            legend.text = element_text(size = 12))
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_various,
