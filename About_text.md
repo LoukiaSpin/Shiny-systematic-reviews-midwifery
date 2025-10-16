@@ -42,4 +42,14 @@ A great feature of the dashboard is that all visualisations offer interactivity,
 <li>Ranjbaran M, Samani RO, Hafezi M, Mansori K, Mahdavi N, Tola HH. Hyoscine Butylbromide and the Duration of Labor: A Systematic Review and Meta-Analysis Study. IJWHRS 2019;7(3):239–45. <a href="https://doi.org/10.15296/ijwhr.2019.41">https://doi.org/10.15296/ijwhr.2019.41</a></li>
 <li>Spineli L, Hallet A, Gross M, Zinsser L. Research Protocol and Extraction Form. Figshare Journal Contribution 2025. <a href="https://doi.org/10.6084/m9.figshare.28624478.v1">https://doi.org/10.6084/m9.figshare.28624478.v1</a></li>
 </ol>
-
+<br>
+<span style="font-size: 20px;"><strong>Acknowledgments</strong></span> 
+<br>
+<span style="font-size: 20px;">The following R packages were used to create the dashboards (alphabetically): <a href="https://CRAN.R-project.org/package=dplyr">dplyr</a>, <a href="https://CRAN.R-project.org/package=DT">DT</a>, <a href="https://CRAN.R-project.org/package=forcats">forcats</a>, <a href="https://CRAN.R-project.org/package=fresh">fresh</a>,</span> 
+<span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=ggimage">ggimage</a>, <a href="https://CRAN.R-project.org/package=ggiraph">ggiraph</a>, <a href="https://CRAN.R-project.org/package=ggplot2">ggplot2</a>, <a href="https://CRAN.R-project.org/package=leaflet">leaflet</a>, <a href="https://CRAN.R-project.org/package=markdown">markdown</a>,</span> 
+<span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=readxl">readxl</a>, <a href="https://CRAN.R-project.org/package=reshape2">reshape2</a>, <a href="https://CRAN.R-project.org/package=rnaturalearth">rnaturalearth</a>, <a href="https://CRAN.R-project.org/package=sf">sf</a>, <a href="https://CRAN.R-project.org/package=shiny">shiny</a>,</span>  
+<span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=shinydashboard">shinydashboard</a>, <a href="https://CRAN.R-project.org/package=shinyWidgets">shinyWidgets</a>, and <a href="https://CRAN.R-project.org/package=writexl">writexl</a>.</span> 
+<br><br>
+<span style="font-size: 20px;">Loukia M Spineli, Patricia Könneker, Anne Christina Hallet, Anne Christine Manawa Nougho, Lotte ten Brinke, Hanna Gehling, Mechthild M Gross and Laura A Zinsser contributed to the data extraction.</span>
+<br><br>
+<span style="font-size: 20px;">Loukia M Spineli and Anna Bludau performed the critical appraisal with the AMSTAR 2 tool.</span> 
