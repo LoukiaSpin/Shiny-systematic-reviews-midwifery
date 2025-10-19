@@ -508,11 +508,11 @@ server <- function(input, output, session) {
       ylim(0, dim(filtered_sr_count())[1]) +
       theme_minimal() +
       theme(plot.title = element_text(size = 12, face = "bold"),
-            axis.title = element_text(size = 12, face = "bold"),
-            axis.text = element_text(size = 12),
+            axis.title = element_text(size = 12, face = "bold", family = "Arial"),
+            axis.text = element_text(size = 12, family = "Arial"),
             legend.position = "none",
-            legend.title = element_text(size = 12, face = "bold"),
-            legend.text = element_text(size = 12))
+            legend.title = element_text(size = 12, face = "bold", family = "Arial"),
+            legend.text = element_text(size = 12, family = "Arial"))
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_amstar,
@@ -546,17 +546,17 @@ server <- function(input, output, session) {
            y = "Number of systematic reviews",
            fill = "",
            alpha = "Domain is") + 
-      guides(fill = FALSE) +
+      guides(fill = "none") +
       ylim(0, dim(filtered_sr_count())[1]) +
       coord_flip() +
       theme_minimal() + 
       theme(plot.title = element_text(size = 12, face = "bold"),
-            axis.title = element_text(size = 12, face = "bold"),
-            axis.text = element_text(size = 12),
-            strip.text = element_text(size = 12, face = "bold"),
+            axis.title = element_text(size = 12, face = "bold", family = "Arial"),
+            axis.text = element_text(size = 12, family = "Arial"),
+            strip.text = element_text(size = 12, face = "bold", family = "Arial"),
             legend.position = "bottom",
-            legend.title = element_text(size = 12, face = "bold"),
-            legend.text = element_text(size = 12))
+            legend.title = element_text(size = 12, face = "bold", family = "Arial"),
+            legend.text = element_text(size = 12, family = "Arial"))
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_various,
@@ -589,15 +589,15 @@ server <- function(input, output, session) {
            fill = "") + 
       ylim(0, dim(filtered_sr_count())[1]) +
       theme_minimal() + 
-      theme(axis.title = element_text(size = 12, face = "bold"),
-            axis.text.y = element_text(size = 12),
+      theme(axis.title = element_text(size = 12, face = "bold", family = "Arial"),
+            axis.text.y = element_text(size = 12, family = "Arial"),
             axis.text.x = element_blank(),
             axis.ticks.x = element_blank(),
-            strip.text = element_text(size = 12, face = "bold"),
+            strip.text = element_text(size = 12, face = "bold", family = "Arial"),
             legend.position = "bottom",
             legend.margin = margin(t = -12),
-            legend.title = element_text(size = 12, face = "bold"),
-            legend.text = element_text(size = 12))
+            legend.title = element_text(size = 12, face = "bold", family = "Arial"),
+            legend.text = element_text(size = 12, family = "Arial"))
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_various,
@@ -656,8 +656,8 @@ server <- function(input, output, session) {
             panel.grid = element_blank(),
            # plot.margin = unit(rep(-1 ,4), "cm"),
             legend.position = "bottom",
-            legend.title = element_text(size = 12, face = "bold"),
-            legend.text = element_text(size = 12)) 
+            legend.title = element_text(size = 12, face = "bold", family = "Arial"),
+            legend.text = element_text(size = 12, family = "Arial")) 
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_databases,
@@ -751,13 +751,13 @@ server <- function(input, output, session) {
            colour = "") + 
       scale_x_discrete(position = 'top') +
       theme_classic() +
-      theme(axis.text.y = element_text(size = 9),
-            axis.text.x = element_text(size = 9),
+      theme(axis.text.y = element_text(size = 9, family = "Arial"),
+            axis.text.x = element_text(size = 9, family = "Arial"),
             axis.ticks.x = element_blank(),
             legend.position = "bottom",
             legend.margin = margin(t = -10),
-            legend.title = element_text(size = 9, face = "bold"),
-            legend.text = element_text(size = 9))
+            legend.title = element_text(size = 9, face = "bold", family = "Arial"),
+            legend.text = element_text(size = 9, family = "Arial"))
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_amstarreview,
@@ -834,8 +834,8 @@ server <- function(input, output, session) {
             panel.grid = element_blank(),
             #plot.margin = unit(rep(-1 ,4), "cm"),
             legend.position = "bottom",
-            legend.title = element_text(size = 12, face = "bold"),
-            legend.text = element_text(size = 12)) 
+            legend.title = element_text(size = 12, face = "bold", family = "Arial"),
+            legend.text = element_text(size = 12, family = "Arial")) 
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_inclusion,
@@ -890,9 +890,9 @@ server <- function(input, output, session) {
       ylim(0, dim(filtered_sr_count())[1]) +
       coord_flip() +
       theme_minimal() + 
-      theme(axis.title = element_text(size = 12, face = "bold"),
-            axis.text = element_text(size = 12),
-            strip.text = element_text(size = 12, face = "bold"),
+      theme(axis.title = element_text(size = 12, face = "bold", family = "Arial"),
+            axis.text = element_text(size = 12, family = "Arial"),
+            strip.text = element_text(size = 12, face = "bold", family = "Arial"),
             legend.position = "none")
     
     # Convert to ggiraph object
@@ -972,8 +972,8 @@ server <- function(input, output, session) {
             panel.grid = element_blank(),
            # plot.margin = unit(rep(-1 ,4), "cm"),
             legend.position = "bottom",
-            legend.title = element_text(size = 12, face = "bold"),
-            legend.text = element_text(size = 12)) 
+            legend.title = element_text(size = 12, face = "bold", family = "Arial"),
+            legend.text = element_text(size = 12, family = "Arial")) 
     
     # Convert to ggiraph object
     girafe(ggobj = interactive_maternalneonatal,
@@ -1025,9 +1025,9 @@ server <- function(input, output, session) {
       ylim(0, dim(filtered_sr_count())[1]) +
       coord_flip() +
       theme_minimal() + 
-      theme(axis.title = element_text(size = 12, face = "bold"),
-            axis.text = element_text(size = 12),
-            strip.text = element_text(size = 12, face = "bold"),
+      theme(axis.title = element_text(size = 12, face = "bold", family = "Arial"),
+            axis.text = element_text(size = 12, family = "Arial"),
+            strip.text = element_text(size = 12, face = "bold", family = "Arial"),
             legend.position = "none")
     
     # Convert to ggiraph object
@@ -1064,12 +1064,12 @@ server <- function(input, output, session) {
            y = "",
            fill = "Characteristic was reported") + 
       theme_minimal() +
-      theme(axis.text.y = element_text(size = 9),
-            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0),
+      theme(axis.text.y = element_text(size = 9, family = "Arial"),
+            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0, family = "Arial"),
             axis.ticks.x = element_blank(),
             legend.position = "none",
             strip.placement = "outside",
-            strip.text = element_text(size = 9.5, colour = "white"),
+            strip.text = element_text(size = 9.5, colour = "white", family = "Arial"),
             strip.background = element_rect(fill = "#00847e", colour = "#00847e"),
             strip.switch.pad.grid = unit(10, "pt"))
     
@@ -1107,12 +1107,12 @@ server <- function(input, output, session) {
            y = "",
            fill = "Characteristic was reported") + 
       theme_minimal() +
-      theme(axis.text.y = element_text(size = 9),
-            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0),
+      theme(axis.text.y = element_text(size = 9, family = "Arial"),
+            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0, family = "Arial"),
             axis.ticks.x = element_blank(),
             legend.position = "none",
             strip.placement = "outside",
-            strip.text = element_text(size = 9.5, colour = "white"),
+            strip.text = element_text(size = 9.5, colour = "white", family = "Arial"),
             strip.background = element_rect(fill = "#00847e", colour = "#00847e"),
             strip.switch.pad.grid = unit(10, "pt"))
     
@@ -1150,12 +1150,12 @@ server <- function(input, output, session) {
            y = "",
            fill = "Characteristic was reported") + 
       theme_minimal() +
-      theme(axis.text.y = element_text(size = 9),
-            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0),
+      theme(axis.text.y = element_text(size = 9, family = "Arial"),
+            axis.text.x = element_text(size = 9, angle = 90, hjust = 0, vjust = 0, family = "Arial"),
             axis.ticks.x = element_blank(),
             legend.position = "none",
             strip.placement = "outside",
-            strip.text = element_text(size = 9.5, colour = "white"),
+            strip.text = element_text(size = 9.5, colour = "white", family = "Arial"),
             strip.background = element_rect(fill = "#00847e", colour = "#00847e"),
             strip.switch.pad.grid = unit(10, "pt"))
     

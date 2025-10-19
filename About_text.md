@@ -50,6 +50,6 @@ A great feature of the dashboard is that all visualisations offer interactivity,
 <span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=readxl">readxl</a>, <a href="https://CRAN.R-project.org/package=reshape2">reshape2</a>, <a href="https://CRAN.R-project.org/package=rnaturalearth">rnaturalearth</a>, <a href="https://CRAN.R-project.org/package=sf">sf</a>, <a href="https://CRAN.R-project.org/package=shiny">shiny</a>,</span>  
 <span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=shinydashboard">shinydashboard</a>, <a href="https://CRAN.R-project.org/package=shinyWidgets">shinyWidgets</a>, and <a href="https://CRAN.R-project.org/package=writexl">writexl</a>.</span> 
 <br><br>
-<span style="font-size: 20px;">Loukia M Spineli, Patricia Könneker, Anne Christina Hallet, Anne Christine Manawa Nougho, Lotte ten Brinke, Hanna Gehling, Mechthild M Gross and Laura A Zinsser contributed to the data extraction.</span>
-<br><br>
-<span style="font-size: 20px;">Loukia M Spineli and Anna Bludau performed the critical appraisal with the AMSTAR 2 tool.</span> 
+<!---<span style="font-size: 20px;">Loukia M Spineli, Patricia Könneker, Anne Christina Hallet, Anne Christine Manawa Nougho, Lotte ten Brinke, Hanna Gehling, Mechthild M Gross and Laura A Zinsser contributed to the data extraction.</span>--->
+<!---<br><br> --->
+<!---<span style="font-size: 20px;">Loukia M Spineli and Anna Bludau performed the critical appraisal with the AMSTAR 2 tool.</span> --->
