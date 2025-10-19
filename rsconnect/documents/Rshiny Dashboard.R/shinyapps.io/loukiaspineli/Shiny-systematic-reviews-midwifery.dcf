@@ -5,7 +5,7 @@ account: loukiaspineli
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 15762728
-bundleId: 11054191
+bundleId: 11054342
 url: https://loukiaspineli.shinyapps.io/Shiny-systematic-reviews-midwifery/
 version: 1
 asMultiple: FALSE

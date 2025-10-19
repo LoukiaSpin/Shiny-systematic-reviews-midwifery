@@ -12,7 +12,7 @@ library(reshape2)
 library(dplyr)
 library(leaflet)
 library(rnaturalearth)
-#library(rnaturalearthdata) # Remove
+library(rnaturalearthdata) 
 library(sf) 
 library(shinyWidgets)
 library(fresh)
@@ -649,7 +649,7 @@ server <- function(input, output, session) {
                  inherit.aes = FALSE) + 
       labs(fill = "Contains grey literature") +
       ylim(-12, 12) +
-      coord_polar() +
+      coord_polar(clip = "off") +
       theme_minimal() +
       theme(axis.text = element_blank(),
             axis.title = element_blank(),
@@ -827,7 +827,7 @@ server <- function(input, output, session) {
                         drop = FALSE) +
       labs(fill = " ") +
       ylim(-12, 12) +
-      coord_polar() +
+      coord_polar(clip = "off") +
       theme_minimal() +
       theme(axis.text = element_blank(),
             axis.title = element_blank(),
@@ -964,8 +964,8 @@ server <- function(input, output, session) {
                         values = c("#00847e", "#89ccc4"),
                         drop = FALSE) +
       labs(fill = " ") +
-      ylim(-20, 20) +
-      coord_polar() +
+      ylim(-12, 12) +
+      coord_polar(clip = "off") +
       theme_minimal() +
       theme(axis.text = element_blank(),
             axis.title = element_blank(),

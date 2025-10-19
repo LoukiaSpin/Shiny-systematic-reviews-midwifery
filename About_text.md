@@ -1,6 +1,6 @@
 ## Introducing the Research Fingerprint dashboard 
 
-<img src="stork_with_baby.jpg" alt="Example" width="380" height="335" align="right"/>
+<img src="./www/stork_with_baby.jpg" alt="Example" width="380" height="335" align="right"/>
 <br>
 <span style="font-size: 20px;">The published literature is under unprecedented proliferation in several clinical areas, regardless of study design [1].</span> 
 <span style="font-size: 20px;">Systematic reviews, initially designed to inform clinicians and decision-makers about the numerous published clinical trials in their research area, 
@@ -18,7 +18,7 @@ Untrustworthy evidence can be harmful to the evidence ecosystem [1].</span>
 We extracted the PICO (Participants, Intervention, Comparator, and Outcome) characteristics that defined their inclusion and exclusion criteria, the databases used for the literature searches, 
 any guidelines considered for reporting and critical appraisal, and their AMSTAR 2 methodological confidence score.</span> 
 <br>
-<img src="mother_baby.png" alt="Example" width="380" height="335" align="right"/>
+<img src="./www/mother_baby.png" alt="Example" width="380" height="335" align="right"/>
 <br>
 <span style="font-size: 20px;">The <strong>Research Fingerprint</strong> dashboard presents the results of our meta-research study using graphical illustrations, featuring eight systematic reviews. 
 Our goal is to communicate our research results comprehensively and transparently, and raise awareness about the quality of systematic reviews on this topic. 
@@ -47,8 +47,8 @@ A great feature of the dashboard is that all visualisations offer interactivity,
 <br>
 <span style="font-size: 20px;">The following R packages were used to create the dashboards (alphabetically): <a href="https://CRAN.R-project.org/package=dplyr">dplyr</a>, <a href="https://CRAN.R-project.org/package=DT">DT</a>, <a href="https://CRAN.R-project.org/package=forcats">forcats</a>, <a href="https://CRAN.R-project.org/package=fresh">fresh</a>,</span> 
 <span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=ggimage">ggimage</a>, <a href="https://CRAN.R-project.org/package=ggiraph">ggiraph</a>, <a href="https://CRAN.R-project.org/package=ggplot2">ggplot2</a>, <a href="https://CRAN.R-project.org/package=leaflet">leaflet</a>, <a href="https://CRAN.R-project.org/package=markdown">markdown</a>,</span> 
-<span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=readxl">readxl</a>, <a href="https://CRAN.R-project.org/package=reshape2">reshape2</a>, <a href="https://CRAN.R-project.org/package=rnaturalearth">rnaturalearth</a>, <a href="https://CRAN.R-project.org/package=sf">sf</a>, <a href="https://CRAN.R-project.org/package=shiny">shiny</a>,</span>  
-<span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=shinydashboard">shinydashboard</a>, <a href="https://CRAN.R-project.org/package=shinyWidgets">shinyWidgets</a>, and <a href="https://CRAN.R-project.org/package=writexl">writexl</a>.</span> 
+<span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=readxl">readxl</a>, <a href="https://CRAN.R-project.org/package=reshape2">reshape2</a>, <a href="https://CRAN.R-project.org/package=rnaturalearth">rnaturalearth</a>, <a href="https://CRAN.R-project.org/package=rnaturalearthdata">rnaturalearthdata</a>, <a href="https://CRAN.R-project.org/package=sf">sf</a>,</span>  
+<span style="font-size: 20px;"><a href="https://CRAN.R-project.org/package=shiny">shiny</a>,<a href="https://CRAN.R-project.org/package=shinydashboard">shinydashboard</a>, <a href="https://CRAN.R-project.org/package=shinyWidgets">shinyWidgets</a>, and <a href="https://CRAN.R-project.org/package=writexl">writexl</a>.</span> 
 <br><br>
 <!---<span style="font-size: 20px;">Loukia M Spineli, Patricia Könneker, Anne Christina Hallet, Anne Christine Manawa Nougho, Lotte ten Brinke, Hanna Gehling, Mechthild M Gross and Laura A Zinsser contributed to the data extraction.</span>--->
 <!---<br><br> --->
