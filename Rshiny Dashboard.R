@@ -544,15 +544,18 @@ server <- function(input, output, session) {
                          values = c(1, 0.6)) +
       labs(x = "",
            y = "Number of systematic reviews",
-           fill = "",
-           alpha = "Domain is") + 
-      guides(fill = "none") +
+           fill = "Item is flawless",
+           alpha = "Critical item",
+           caption = "Note: Critical items are indicated in bold.") + 
+      guides(alpha = "none") +
       ylim(0, dim(filtered_sr_count())[1]) +
       coord_flip() +
       theme_minimal() + 
       theme(plot.title = element_text(size = 12, face = "bold"),
+            plot.caption= element_text(size = 12, family = "Arial", hjust = 0),
             axis.title = element_text(size = 12, face = "bold", family = "Arial"),
-            axis.text = element_text(size = 12, family = "Arial"),
+            axis.text.x = element_text(size = 12, family = "Arial"),
+            axis.text.y = element_text(size = 12, family = "Arial", face = ifelse(rev(unlist(data_various[!duplicated(data_various$variable), 5])) == "Critical", "bold", "plain")),
             strip.text = element_text(size = 12, face = "bold", family = "Arial"),
             legend.position = "bottom",
             legend.title = element_text(size = 12, face = "bold", family = "Arial"),
